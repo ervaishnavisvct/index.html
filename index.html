@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SkillSprint – Micro Learning</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b1d29;--mu:#6b7085;--pr:#5b5bf0;--pr2:#eceaff;--ok:#1a9b5b;--bad:#d64545;--bd:#e3e5ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13141c;--card:#1d1f2b;--tx:#eceef6;--mu:#9a9fb5;--pr:#8383ff;--pr2:#2a2b45;--ok:#4cc88a;--bad:#ff7777;--bd:#30334a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#13141c;--card:#1d1f2b;--tx:#eceef6;--mu:#9a9fb5;--pr:#8383ff;--pr2:#2a2b45;--ok:#4cc88a;--bad:#ff7777;--bd:#30334a;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--card);border-bottom:1px solid var(--bd);display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;z-index:5}
+header b{font-size:20px;color:var(--pr);cursor:pointer;margin-right:auto}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+button,.btn{font:inherit;border:0;border-radius:10px;padding:8px 14px;background:var(--pr);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+button.g,.btn.g{background:var(--pr2);color:var(--pr)}button.d{background:var(--bad)}
+main{max-width:900px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.tag{background:var(--pr2);color:var(--pr);border-radius:20px;padding:2px 10px;font-size:13px}
+.mu{color:var(--mu);font-size:14px}
+input,select,textarea{font:inherit;width:100%;padding:9px 11px;margin:5px 0 10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+.bar{height:10px;background:var(--pr2);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pr)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.stat{text-align:center}.stat b{font-size:28px;display:block;color:var(--pr)}
+.opt{display:block;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin:6px 0;cursor:pointer}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}.opt.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.opt input{width:auto;margin:0 8px 0 0}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid var(--bd);text-align:left}
+.cert{border:6px double var(--pr);text-align:center;padding:32px 16px;border-radius:12px;background:var(--card)}
+.cert h1{color:var(--pr);margin:0 0 8px}
+#chatB{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));border-radius:50%;width:52px;height:52px;font-size:22px;padding:0;z-index:9}
+#chat{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:min(320px,calc(100% - 32px));background:var(--card);border:1px solid var(--bd);border-radius:14px;display:none;flex-direction:column;z-index:9;max-height:60vh}
+#chat.on{display:flex}#msgs{overflow:auto;padding:10px;flex:1;min-height:140px}
+.m{margin:6px 0;padding:7px 10px;border-radius:10px;max-width:85%}.m.u{background:var(--pr);color:#fff;margin-left:auto}.m.b{background:var(--pr2)}
+@media print{header,#chatB,#chat,.np{display:none!important}}
+</style></head><body>
+<header><b onclick="go('home')">⚡ SkillSprint</b><nav id="nav"></nav></header>
+<main id="app"></main>
+<button id="chatB" onclick="$('#chat').classList.toggle('on')" aria-label="Chat">💬</button>
+<div id="chat"><div id="msgs"><div class="m b">Hi! Ask me about courses, quizzes, streaks or certificates.</div></div>
+<div style="display:flex;gap:6px;padding:8px"><input id="ci" placeholder="Ask a doubt…" style="margin:0" onkeydown="if(event.key==='Enter')ask()"><button onclick="ask()">Send</button></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+const yt=q=>"https://www.youtube.com/results?search_query="+encodeURIComponent(q);
+const SEED=[
+{id:"c1",title:"Python Basics",cat:"Python",lessons:[
+{t:"Variables & Data Types",v:yt("python variables data types"),n:"A variable stores a value. Python types: int, float, str, bool. Use type() to check a type.",q:[{q:"Which is a string?",o:["10","'hello'","3.5","True"],a:1},{q:"Which function shows a value’s type?",o:["len()","type()","print()","int()"],a:1}]},
+{t:"Loops & Conditions",v:yt("python loops for while"),n:"if/elif/else make decisions. for loops iterate over sequences; while loops repeat until a condition is false.",q:[{q:"Which loop runs over a list?",o:["for","if","def","try"],a:0},{q:"What does range(3) give?",o:["1,2,3","0,1,2","0,1,2,3","3"],a:1}]}]},
+{id:"c2",title:"AI Fundamentals",cat:"AI",lessons:[
+{t:"What is AI?",v:yt("what is artificial intelligence"),n:"AI is the ability of machines to perform tasks that normally need human intelligence: learning, reasoning, perception.",q:[{q:"AI stands for?",o:["Automated Input","Artificial Intelligence","Applied Interface","Auto Internet"],a:1},{q:"Which is an AI task?",o:["Image recognition","Typing","Charging","Printing"],a:0}]},
+{t:"Machine Learning Intro",v:yt("machine learning introduction"),n:"Machine learning lets models learn patterns from data. Types: supervised, unsupervised, reinforcement.",q:[{q:"Supervised learning uses?",o:["Labeled data","No data","Only images","Random noise"],a:0},{q:"ML models learn from?",o:["Data","Magic","Keyboards","Cables"],a:0}]}]},
+{id:"c3",title:"Data Science Starter",cat:"Data Science",lessons:[
+{t:"Intro to Pandas",v:yt("pandas tutorial beginners"),n:"Pandas provides DataFrame, a table-like structure. Use read_csv() to load data and head() to preview it.",q:[{q:"Pandas’ main table structure?",o:["Array","DataFrame","Tuple","Set"],a:1},{q:"Which loads a CSV?",o:["read_csv()","open_csv()","get()","load()"],a:0}]},
+{t:"Data Visualization",v:yt("data visualization matplotlib"),n:"Charts reveal patterns. Line charts show trends, bar charts compare categories, histograms show distributions.",q:[{q:"Best chart for trends over time?",o:["Line","Pie","Table","Map"],a:0},{q:"Histogram shows?",o:["Distribution","Names","Dates only","Images"],a:0}]}]}];
+const D=`AI Chatbots::ChatGPT@chatgpt.com,Claude@claude.ai,Gemini@gemini.google.com,Microsoft Copilot@copilot.microsoft.com,Perplexity@perplexity.ai,Grok@grok.com,Meta AI@meta.ai,DeepSeek@deepseek.com,Le Chat (Mistral)@chat.mistral.ai,Pi@pi.ai,Poe@poe.com,You.com@you.com,Character.AI@character.ai,HuggingChat@huggingface.co/chat,Qwen Chat@chat.qwen.ai,Kimi@kimi.com,Replika@replika.com,Duck.ai@duck.ai,Phind@phind.com,Brave Leo,Ernie Bot,Cohere Coral
+Image AI::Midjourney@midjourney.com,DALL·E,Stable Diffusion@stability.ai,Adobe Firefly@firefly.adobe.com,Leonardo AI@leonardo.ai,Ideogram@ideogram.ai,Playground AI@playground.com,NightCafe@nightcafe.studio,Craiyon@craiyon.com,Lexica@lexica.art,Krea@krea.ai,FLUX@bfl.ai,Recraft@recraft.ai,Clipdrop@clipdrop.co,Photoroom@photoroom.com,Remove.bg@remove.bg,Upscayl@upscayl.org,Magnific@magnific.ai,Fotor@fotor.com,Artbreeder@artbreeder.com,Tensor.Art@tensor.art,Civitai@civitai.com,Pixlr@pixlr.com,Freepik AI@freepik.com,Picsart@picsart.com,BlueWillow
+Video AI::Sora@sora.com,Runway@runwayml.com,Pika@pika.art,Luma Dream Machine@lumalabs.ai,Kling AI@klingai.com,Google Veo,Hailuo AI@hailuoai.video,Synthesia@synthesia.io,HeyGen@heygen.com,D-ID@d-id.com,InVideo AI@invideo.io,Descript@descript.com,CapCut@capcut.com,Opus Clip@opus.pro,Fliki@fliki.ai,Pictory@pictory.ai,Lumen5@lumen5.com,VEED@veed.io,Kapwing@kapwing.com,Colossyan@colossyan.com,Vidnoz@vidnoz.com,Genmo,Viggle,Wan Video
+Audio & Music AI::ElevenLabs@elevenlabs.io,Suno@suno.com,Udio@udio.com,Murf AI@murf.ai,Speechify@speechify.com,Play.ht,Resemble AI@resemble.ai,WellSaid Labs,LOVO,Otter.ai@otter.ai,Fireflies.ai@fireflies.ai,OpenAI Whisper,AssemblyAI@assemblyai.com,Deepgram@deepgram.com,Krisp@krisp.ai,Adobe Podcast,Cleanvoice,AIVA@aiva.ai,Soundraw@soundraw.io,Boomy,Mubert@mubert.com,Moises@moises.ai,LALAL.AI@lalal.ai,Voicemod@voicemod.net
+Coding AI::GitHub Copilot@github.com/features/copilot,Cursor@cursor.com,Claude Code,Windsurf@windsurf.com,Replit AI@replit.com,Tabnine@tabnine.com,Amazon Q Developer,Codeium,JetBrains AI Assistant,Sourcegraph Cody@sourcegraph.com,Continue@continue.dev,Aider@aider.chat,Bolt.new@bolt.new,Lovable@lovable.dev,v0@v0.dev,Devin@devin.ai,OpenAI Codex,Gemini Code Assist,Blackbox AI@blackbox.ai,CodeRabbit@coderabbit.ai,Qodo,Pieces@pieces.app,Warp@warp.dev,Zed@zed.dev,Cline,Kiro@kiro.dev,Google Jules,Mintlify@mintlify.com,Greptile,Snyk Code
+Writing AI::Jasper@jasper.ai,Copy.ai@copy.ai,Writesonic@writesonic.com,Grammarly@grammarly.com,QuillBot@quillbot.com,Wordtune@wordtune.com,Rytr@rytr.me,Sudowrite@sudowrite.com,NovelAI@novelai.net,Hemingway Editor,ProWritingAid@prowritingaid.com,Anyword@anyword.com,Writer@writer.com,Lex@lex.page,TextCortex,Scribe@scribehow.com,Paperpal@paperpal.com,DeepL Write,Originality.ai@originality.ai,GPTZero@gptzero.me,HyperWrite
+Research & Study AI::Elicit@elicit.com,Consensus@consensus.app,Scite@scite.ai,Semantic Scholar@semanticscholar.org,NotebookLM@notebooklm.google,SciSpace@scispace.com,ResearchRabbit,Connected Papers,Litmaps,Scholarcy,Humata,ChatPDF@chatpdf.com,Khanmigo@khanmigo.ai,Duolingo Max,Quizlet AI,Photomath,Wolfram Alpha@wolframalpha.com,Julius AI,Genei,Socratic
+Productivity AI::Mem@mem.ai,Taskade,Motion@usemotion.com,Reclaim.ai,Fathom@fathom.video,tl;dv@tldv.io,Read AI,Zapier AI@zapier.com,Make@make.com,n8n@n8n.io,Bardeen,Zoom AI Companion,Slack AI,Microsoft 365 Copilot,Google Workspace Gemini,Airtable AI,ClickUp Brain,Asana AI,Rewind,Limitless,Raycast AI,Granola@granola.ai,Superwhisper,Notion AI
+Design & Web AI::Gamma@gamma.app,Beautiful.ai@beautiful.ai,Tome,Canva Magic Studio@canva.com,Figma AI@figma.com,Uizard@uizard.io,Framer AI@framer.com,Galileo AI,Visily,Looka@looka.com,Brandmark,Designs.ai,Microsoft Designer@designer.microsoft.com,Relume@relume.io,Durable@durable.co,10Web,Wix ADI,Webflow AI,Dora AI,Spline AI,Vectorizer.AI@vectorizer.ai,Khroma
+LLM Dev Tools::OpenAI API,Anthropic API@docs.claude.com,Gemini API,LangChain@langchain.com,LlamaIndex@llamaindex.ai,LangGraph,CrewAI@crewai.com,AutoGen,Semantic Kernel,Haystack@haystack.deepset.ai,DSPy@dspy.ai,Hugging Face@huggingface.co,Ollama@ollama.com,LM Studio@lmstudio.ai,vLLM,llama.cpp,Groq@groq.com,Together AI@together.ai,Fireworks AI@fireworks.ai,Replicate@replicate.com,OpenRouter@openrouter.ai,Cohere@cohere.com,Mistral AI@mistral.ai,Flowise@flowiseai.com,Langflow@langflow.org,Dify@dify.ai,Vercel AI SDK@ai-sdk.dev,Pydantic AI,Instructor,Guardrails AI,LiteLLM,Model Context Protocol@modelcontextprotocol.io,Unsloth,Axolotl,Gradio@gradio.app,Streamlit@streamlit.io,Chainlit
+Vector DB & Data::Pinecone@pinecone.io,Weaviate@weaviate.io,Chroma@trychroma.com,Qdrant@qdrant.tech,Milvus@milvus.io,FAISS,pgvector,Elasticsearch,Redis Vector Search,MongoDB Atlas Vector Search,Supabase@supabase.com,LanceDB,Neo4j@neo4j.com,Databricks@databricks.com,Snowflake Cortex
+ML Frameworks::TensorFlow@tensorflow.org,PyTorch@pytorch.org,Keras@keras.io,scikit-learn@scikit-learn.org,XGBoost,LightGBM,CatBoost,JAX,Pandas@pandas.pydata.org,NumPy@numpy.org,Matplotlib@matplotlib.org,Seaborn,Plotly@plotly.com,OpenCV@opencv.org,spaCy@spacy.io,NLTK,Hugging Face Transformers,fastai@fast.ai,ONNX@onnx.ai,Ray@ray.io,Dask,Apache Spark@spark.apache.org,Polars@pola.rs,Jupyter@jupyter.org,Google Colab@colab.research.google.com,Kaggle@kaggle.com,Optuna,SHAP,LIME,Ultralytics YOLO@ultralytics.com,MediaPipe,Detectron2,Stable-Baselines3,Gymnasium,PyTorch Lightning,TensorBoard,Power BI,Tableau
+Cloud & MLOps::AWS Bedrock,Amazon SageMaker,Google Vertex AI,Azure OpenAI,Azure AI Foundry,IBM watsonx@ibm.com/watsonx,NVIDIA NIM,NVIDIA CUDA,Cloudflare Workers AI,Modal@modal.com,RunPod@runpod.io,Lambda Cloud,Paperspace,Weights & Biases@wandb.ai,MLflow@mlflow.org,DVC@dvc.org,Kubeflow,Apache Airflow,Docker@docker.com,Kubernetes@kubernetes.io,BentoML,Seldon,Comet ML,Neptune.ai,ClearML,Hugging Face Inference Endpoints
+Business AI::HubSpot AI,Salesforce Einstein,Intercom Fin,Zendesk AI,Gong@gong.io,Clay@clay.com,Apollo.io,Regie.ai,Surfer SEO@surferseo.com,Frase@frase.io,MarketMuse,Semrush AI,Ahrefs AI,Clearscope,AdCreative.ai,Predis AI,Ocoya,Buffer AI,Hootsuite OwlyWriter,ManyChat@manychat.com,Chatfuel,Tidio@tidio.com,Landbot,Voiceflow@voiceflow.com,Botpress@botpress.com,Rasa@rasa.com,Dialogflow,Amazon Lex,UiPath@uipath.com,Automation Anywhere,Harvey AI,Spellbook,Rossum,Abridge
+AI Agents & Ops::AutoGPT,BabyAGI,AgentGPT,OpenAI Operator,Manus,Genspark,MultiOn,Lindy@lindy.ai,Relevance AI,SuperAGI,MetaGPT,OpenHands,Browser Use,LangSmith,Langfuse,Helicone,Arize Phoenix,Braintrust,PromptLayer,Promptfoo,AlphaFold,Insilico Medicine
+AI Concepts::Prompt Engineering,Retrieval-Augmented Generation (RAG),LLM Fine-tuning,AI Agents Basics,Embeddings,Transformer Architecture,Computer Vision,Natural Language Processing,Reinforcement Learning,Generative AI,AI Ethics,AI Safety,MLOps Basics,Neural Networks,Deep Learning,Machine Learning,Data Science,Time Series Forecasting,Recommender Systems,Explainable AI,Federated Learning,Edge AI,TinyML,Multimodal AI,Knowledge Graphs,Speech Recognition,Diffusion Models,LLM Evaluation,Responsible AI,Vibe Coding`;
+const BL={"AI Chatbots":"conversational assistants that answer questions, write, reason and help with daily tasks","Image AI":"tools that create or edit images from text prompts","Video AI":"tools that generate, edit or localise video with AI","Audio & Music AI":"tools for voice, speech, transcription and music generation","Coding AI":"assistants that write, review, debug and ship code","Writing AI":"tools that draft, rewrite, proofread and check text","Research & Study AI":"tools for finding papers, summarising documents and learning faster","Productivity AI":"tools that automate meetings, notes, tasks and workflows","Design & Web AI":"tools that create slides, UI designs, logos and websites","LLM Dev Tools":"APIs, frameworks and platforms for building LLM apps","Vector DB & Data":"databases and data platforms used for search, RAG and analytics","ML Frameworks":"libraries for machine learning, deep learning and data science","Cloud & MLOps":"platforms for training, deploying and monitoring AI models","Business AI":"AI for marketing, sales, support, automation and operations","AI Agents & Ops":"autonomous agents and tools to observe and evaluate them","AI Concepts":"core AI ideas every learner should know"};
+function gen(){let i=0,out=[];const L=D.split("\n"),cats=L.map(l=>l.split("::")[0]),G=n=>"https://www.google.com/search?q="+encodeURIComponent(n);
+ const mk=(q,ok,bad,j)=>{const o=[...bad];o.splice(j%4,0,ok);return{q,o,a:j%4}};
+ L.forEach(line=>{const[c,s]=line.split("::");s.split(",").forEach(x=>{const p=x.lastIndexOf("@"),n=p<0?x:x.slice(0,p),d=p<0?"":x.slice(p+1),k=i++,off=d?"https://"+d:G(n+" official site"),o=cats.filter(z=>z!==c),w=[o[k%o.length],o[(k+3)%o.length],o[(k+7)%o.length]];
+ out.push({id:"t"+k,title:n,cat:c,lessons:[
+ {t:`What is ${n}?`,v:yt(n+" explained"),l:[["🌐 Official site",off]],n:`${n} belongs to the “${c}” category: ${BL[c]||"AI tools"}. Open the official site, read the homepage and pricing, and note which problem ${n} solves.`,q:[mk(`Which category does ${n} belong to?`,c,w,k),mk(`What is the best first step to learn ${n}?`,"Try it on a small real task",["Memorize every feature","Skip the basics","Only read about it"],k+1)]},
+ {t:`Getting started with ${n}`,v:yt(n+" tutorial for beginners"),l:[["📚 Docs & tutorials",G(n+" documentation getting started")]],n:`1) Create an account or install ${n}. 2) Follow the official quick-start. 3) Run one simple example. 4) Save what worked in your notes.`,q:[mk(`Where should you check for ${n}’s latest features?`,"Its official site or docs",["An old textbook","Random rumours","Nowhere"],k+2),mk(`What should you do after the quick-start of ${n}?`,"Run a simple example",["Delete the account","Ignore the output","Share your password"],k+3)]},
+ {t:`Projects & best practices with ${n}`,v:yt(n+" project ideas"),l:[["🔎 Project ideas",G(n+" project ideas")]],n:`Build a mini project with ${n} and add it to your portfolio. Always verify AI output, protect private data and credit your sources.`,q:[mk("Good practice with AI tools?","Verify the output",["Trust blindly","Share passwords","Ignore privacy"],k),mk("Where can you show your work?","Portfolio or GitHub",["Nowhere","Only in your head","Delete it"],k+1)]}]})})});return out}
+let Q="",PG=0;
+function home(){const u=me(),cats=[...new Set(courses.map(c=>c.cat))],f=V.x||"All";setTimeout(grid,0);
+ return `<h2>Hi ${esc(u.name)} 👋</h2><p class="mu">${courses.length} courses on AI tools &amp; technologies</p><input id="sq" placeholder="Search tools (ChatGPT, Midjourney, LangChain…)" value="${esc(Q)}" oninput="Q=this.value;PG=0;grid()"><select onchange="go('home',this.value)">${["All",...cats].map(c=>`<option ${c===f?"selected":""}>${esc(c)}</option>`).join("")}</select><div id="grid"></div>`}
+function grid(){const u=me(),g=$("#grid");if(!g)return;const f=V.x||"All",q=Q.toLowerCase(),L=courses.filter(c=>(f==="All"||c.cat===f)&&(c.title+" "+c.cat).toLowerCase().includes(q)),P=24,pages=Math.ceil(L.length/P)||1;PG=Math.max(0,Math.min(PG,pages-1));
+ g.innerHTML=`<div class="grid">${L.slice(PG*P,PG*P+P).map(c=>{const d=done(u,c),t=c.lessons.length||1;return `<div class="card"><span class="tag">${esc(c.cat)}</span><h3>${esc(c.title)}</h3><p class="mu">${c.lessons.length} lessons · ${d}/${c.lessons.length} done</p><div class="bar"><i style="width:${d/t*100}%"></i></div><p><button onclick="go('course','${c.id}')">Open</button></p></div>`}).join("")||`<p class="mu">No courses match.</p>`}</div><p style="text-align:center"><button class="g" onclick="PG--;grid()">‹</button> <span class="mu">Page ${PG+1}/${pages} · ${L.length} courses</span> <button class="g" onclick="PG++;grid()">›</button></p>`}
+const ADMIN={name:"Admin",email:"admin@skillsprint.com",pass:"admin123",admin:true,prog:{},pts:0,streak:0,last:""};
+let users=load("ss_users",[ADMIN]),courses=[...gen(),...load("ss_custom",[])],meE=load("ss_me",null),V={p:"home"};
+const me=()=>users.find(u=>u.email===meE);
+const sv=()=>{save("ss_users",users);save("ss_custom",courses.filter(c=>c.id[0]==="c"));save("ss_me",meE)};
+const key=(c,i)=>c+"-"+i;
+const done=(u,c)=>c.lessons.filter((_,i)=>(u.prog[key(c.id,i)]||0)>=60).length;
+function go(p,x){V={p,x:x};render();window.scrollTo(0,0)}
+function render(){
+ const u=me();
+ $("#nav").innerHTML=u?`<button class="g" onclick="go('home')">Courses</button><button class="g" onclick="go('dash')">Dashboard</button><button class="g" onclick="go('board')">Leaderboard</button>${u.admin?`<button class="g" onclick="go('admin')">Admin</button>`:""}<button class="g" onclick="toggleTheme()">🌓</button><button onclick="logout()">Logout</button>`:`<button class="g" onclick="toggleTheme()">🌓</button>`;
+ const f={home,login:auth,dash,board,course,lesson,admin,cert}[V.p]||home;
+ $("#app").innerHTML=u||V.p==="login"?f():auth();
+}
+function toggleTheme(){const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"light":"dark"}
+function auth(){return `<div class="card" style="max-width:420px;margin:30px auto"><h2>Welcome to SkillSprint ⚡</h2><p class="mu">5–10 minute lessons, quizzes and streaks.</p>
+<label>Name (sign up only)</label><input id="an" placeholder="Your name"><label>Email</label><input id="ae" type="email" placeholder="you@example.com"><label>Password</label><input id="ap" type="password">
+<div style="display:flex;gap:8px"><button onclick="login()">Login</button><button class="g" onclick="signup()">Sign up</button></div>
+<p class="mu" id="aerr"></p><p class="mu">Admin demo: admin@skillsprint.com / admin123</p></div>`}
+function signup(){const n=$("#an").value.trim(),e=$("#ae").value.trim().toLowerCase(),p=$("#ap").value;
+ if(!n||!e||p.length<4)return $("#aerr").textContent="Enter name, email and a password (4+ chars).";
+ if(users.some(u=>u.email===e))return $("#aerr").textContent="Email already registered.";
+ users.push({name:n,email:e,pass:p,prog:{},pts:0,streak:0,last:""});meE=e;sv();go("home")}
+function login(){const e=$("#ae").value.trim().toLowerCase(),p=$("#ap").value,u=users.find(u=>u.email===e&&u.pass===p);
+ if(!u)return $("#aerr").textContent="Wrong email or password.";meE=e;sv();go("home")}
+function logout(){meE=null;sv();go("home")}
+function homeOld(){const u=me();const cats=[...new Set(courses.map(c=>c.cat))];const f=V.x||"All";
+ return `<h2>Hi ${esc(u.name)} 👋</h2><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${["All",...cats].map(c=>`<button class="${c===f?"":"g"}" onclick="go('home','${esc(c)}')">${esc(c)}</button>`).join("")}</div>
+ <div class="grid">${courses.filter(c=>f==="All"||c.cat===f).map(c=>{const d=done(u,c),t=c.lessons.length||1;return `<div class="card"><span class="tag">${esc(c.cat)}</span><h3>${esc(c.title)}</h3><p class="mu">${c.lessons.length} lessons</p><div class="bar"><i style="width:${d/t*100}%"></i></div><p class="mu">${d}/${c.lessons.length} done</p><button onclick="go('course','${c.id}')">Open</button></div>`}).join("")||`<p class="mu">No courses yet.</p>`}</div>`}
+function course(){const u=me(),c=courses.find(c=>c.id===V.x);if(!c)return home();const d=done(u,c);
+ return `<button class="g" onclick="go('home')">← Back</button><h2>${esc(c.title)}</h2>
+ ${c.lessons.map((l,i)=>{const s=u.prog[key(c.id,i)];return `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>${i+1}. ${esc(l.t)}</b><div class="mu">${s!=null?"Best score: "+s+"%":"Not attempted"}</div></div><button onclick="go('lesson','${c.id}|${i}')">${s!=null?"Review":"Start"}</button></div>`}).join("")||`<p class="mu">No lessons yet.</p>`}
+ ${c.lessons.length&&d===c.lessons.length?`<button onclick="go('cert','${c.id}')">🎓 Get certificate</button>`:""}`}
+function lesson(){const[cid,i]=V.x.split("|"),c=courses.find(c=>c.id===cid),l=c.lessons[+i];
+ return `<button class="g" onclick="go('course','${cid}')">← ${esc(c.title)}</button><h2>${esc(l.t)}</h2>
+ <div class="card"><a class="btn g" href="${esc(l.v)}" target="_blank" rel="noopener">▶ Watch video</a> ${(l.l||[]).map(x=>`<a class="btn g" href="${esc(x[1])}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(" ")}<p>${esc(l.n)}</p></div>
+ <div class="card"><h3>Quiz</h3><div id="qz">${l.q.map((q,k)=>`<div style="margin-bottom:12px"><b>${k+1}. ${esc(q.q)}</b>${q.o.map((o,j)=>`<label class="opt"><input type="radio" name="q${k}" value="${j}">${esc(o)}</label>`).join("")}</div>`).join("")}</div>
+ <button onclick="submitQ('${cid}',${i})">Submit quiz</button><p id="res" style="font-weight:600"></p></div>`}
+function submitQ(cid,i){const u=me(),l=courses.find(c=>c.id===cid).lessons[i];let ok=0;
+ l.q.forEach((q,k)=>{const s=document.querySelector(`input[name=q${k}]:checked`);const labs=document.querySelectorAll(`input[name=q${k}]`);
+  labs.forEach((r,j)=>{r.disabled=true;const p=r.parentElement;if(j===q.a)p.classList.add("ok");else if(s&&+s.value===j)p.classList.add("no")});
+  if(s&&+s.value===q.a)ok++});
+ const pct=Math.round(ok/l.q.length*100),k=key(cid,i);
+ if(u.prog[k]==null)u.pts+=ok*10;u.prog[k]=Math.max(u.prog[k]||0,pct);
+ const t=new Date(),td=t.toISOString().slice(0,10),y=new Date(t-864e5).toISOString().slice(0,10);
+ if(u.last!==td){u.streak=u.last===y?u.streak+1:1;u.last=td}
+ sv();$("#res").textContent=`Score: ${ok}/${l.q.length} (${pct}%) ${pct>=60?"✅ Passed":"❌ Need 60% to pass – review and retry"}`}
+function dash(){const u=me();let tot=0,dn=0,sc=[];
+ courses.forEach(c=>{tot+=c.lessons.length;dn+=done(u,c)});Object.values(u.prog).forEach(v=>sc.push(v));
+ const avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):0,pc=tot?Math.round(dn/tot*100):0;
+ return `<h2>Dashboard</h2><div class="stats"><div class="card stat"><b>${pc}%</b>Progress</div><div class="card stat"><b>${avg}%</b>Avg score</div><div class="card stat"><b>🔥 ${u.streak}</b>Day streak</div><div class="card stat"><b>${u.pts}</b>Points</div></div>
+ <div class="card"><h3>My courses</h3>${courses.filter(c=>c.lessons.some((_,i)=>u.prog[key(c.id,i)]!=null)).map(c=>{const d=done(u,c),t=c.lessons.length||1;return `<p><b>${esc(c.title)}</b> <span class="mu">${d}/${c.lessons.length}</span></p><div class="bar"><i style="width:${d/t*100}%"></i></div>${c.lessons.length&&d===c.lessons.length?`<p><button onclick="go('cert','${c.id}')">🎓 Certificate</button></p>`:""}`}).join("")}</div>`}
+function board(){const r=[...users].filter(u=>!u.admin).sort((a,b)=>b.pts-a.pts);
+ return `<h2>🏆 Leaderboard</h2><div class="card"><table><tr><th>#</th><th>Name</th><th>Points</th><th>Streak</th></tr>${r.map((u,i)=>`<tr><td>${i+1}</td><td>${esc(u.name)}</td><td>${u.pts}</td><td>🔥 ${u.streak}</td></tr>`).join("")||`<tr><td colspan="4" class="mu">No learners yet.</td></tr>`}</table><p class="mu">Shows learners on this browser/device.</p></div>`}
+function cert(){const u=me(),c=courses.find(c=>c.id===V.x);
+ return `<div class="np"><button class="g" onclick="go('dash')">← Back</button> <button onclick="window.print()">Print / Save PDF</button></div><br><div class="cert"><h1>Certificate of Completion</h1><p>This certifies that</p><h2>${esc(u.name)}</h2><p>has successfully completed</p><h2>${esc(c.title)}</h2><p class="mu">${new Date().toLocaleDateString()} · SkillSprint</p></div>`}
+function admin(){const u=me();if(!u.admin)return home();
+ return `<h2>Admin panel</h2><div class="card"><h3>Add course</h3><input id="ct" placeholder="Course title"><input id="cc" placeholder="Category (e.g. AI)"><button onclick="addC()">Add course</button></div>
+ <div class="card"><h3>Add lesson with quiz question</h3><select id="lc">${courses.map(c=>`<option value="${c.id}">${esc(c.title)}</option>`).join("")}</select>
+ <input id="lt" placeholder="Lesson title"><input id="lv" placeholder="Video URL (YouTube link)"><textarea id="ln" rows="3" placeholder="Short notes"></textarea>
+ <input id="lq" placeholder="Quiz question"><input id="o0" placeholder="Option A"><input id="o1" placeholder="Option B"><input id="o2" placeholder="Option C"><input id="o3" placeholder="Option D">
+ <select id="la"><option value="0">Correct: A</option><option value="1">Correct: B</option><option value="2">Correct: C</option><option value="3">Correct: D</option></select><button onclick="addL()">Add lesson</button></div>
+ <div class="card"><h3>Manage my custom courses</h3>${courses.filter(c=>c.id[0]==="c").map(c=>`<p>${esc(c.title)} <span class="mu">(${c.lessons.length} lessons)</span> <button class="d" onclick="delC('${c.id}')">Delete</button></p>`).join("")}</div>`}
+function addC(){const t=$("#ct").value.trim(),c=$("#cc").value.trim()||"General";if(!t)return;courses.push({id:"c"+Date.now(),title:t,cat:c,lessons:[]});sv();render()}
+function addL(){const c=courses.find(c=>c.id===$("#lc").value),t=$("#lt").value.trim(),q=$("#lq").value.trim(),o=[0,1,2,3].map(i=>$("#o"+i).value.trim());
+ if(!c||!t||!q||o.some(x=>!x))return alert("Fill lesson title, question and all 4 options.");
+ c.lessons.push({t,v:$("#lv").value.trim()||yt(t),n:$("#ln").value.trim(),q:[{q,o,a:+$("#la").value}]});sv();render()}
+function delC(id){if(confirm("Delete this course?")){courses=courses.filter(c=>c.id!==id);sv();render()}}
+const FAQ=[[/course|learn|start/,"Open Courses, pick a course and tap Start on a lesson."],[/quiz|score|pass/,"Each lesson has an auto-graded quiz. Score 60% or more to pass."],[/streak/,"Finish at least one quiz each day to grow your 🔥 streak."],[/certif/,"Pass every lesson in a course, then tap Get certificate."],[/point|leader/,"You earn 10 points per correct answer. See the Leaderboard tab."],[/admin|add/,"Log in as admin to add courses and lessons."],[/python|ai|data/,"Try the Python Basics, AI Fundamentals or Data Science Starter courses!"]];
+function ask(){const i=$("#ci"),t=i.value.trim();if(!t)return;const m=$("#msgs");m.innerHTML+=`<div class="m u">${esc(t)}</div>`;
+ const h=FAQ.find(f=>f[0].test(t.toLowerCase()));m.innerHTML+=`<div class="m b">${h?h[1]:"I can help with courses, quizzes, streaks, points and certificates. Try asking about one!"}</div>`;i.value="";m.scrollTop=m.scrollHeight}
+render();
+</script></body></html>
